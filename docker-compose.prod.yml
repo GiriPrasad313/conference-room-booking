@@ -1,0 +1,82 @@
+# Docker Compose for Production (EC2)
+# Used by CI/CD pipeline for deployments
+
+version: '3.8'
+
+services:
+  # API Gateway (nginx)
+  api-gateway:
+    image: ${ECR_REGISTRY}/api-gateway:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - rooms-service
+      - booking-service
+      - weather-service
+    restart: always
+    networks:
+      - app-network
+
+  # Auth Service
+  auth-service:
+    image: ${ECR_REGISTRY}/auth-service:latest
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+    restart: always
+    networks:
+      - app-network
+
+  # Rooms Service
+  rooms-service:
+    image: ${ECR_REGISTRY}/rooms-service:latest
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+    restart: always
+    networks:
+      - app-network
+
+  # Booking Service
+  booking-service:
+    image: ${ECR_REGISTRY}/booking-service:latest
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}
+      - WEATHER_SERVICE_URL=http://weather-service:5000
+      - ROOMS_SERVICE_URL=http://rooms-service:3002
+      - JWT_SECRET=${JWT_SECRET}
+    restart: always
+    networks:
+      - app-network
+
+  # Weather Service
+  weather-service:
+    image: ${ECR_REGISTRY}/weather-service:latest
+    environment:
+      - FLASK_ENV=production
+    restart: always
+    networks:
+      - app-network
+
+  # Email Worker
+  email-worker:
+    image: ${ECR_REGISTRY}/email-worker:latest
+    environment:
+      - NODE_ENV=production
+      - WORKER_MODE=sqs
+      - SQS_QUEUE_URL=${SQS_QUEUE_URL}
+      - AWS_REGION=us-east-1
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+    restart: always
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,27 @@
+{
+  "name": "conference-room-booking",
+  "version": "1.0.0",
+  "description": "Scalable Conference Room Booking System - Microservices Architecture",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose up -d",
+    "dev:build": "docker-compose up -d --build",
+    "dev:down": "docker-compose down",
+    "dev:logs": "docker-compose logs -f",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "keywords": [
+    "microservices",
+    "conference-room",
+    "booking",
+    "nodejs",
+    "docker",
+    "aws"
+  ],
+  "author": "",
+  "license": "ISC"
+}
