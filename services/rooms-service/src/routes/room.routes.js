@@ -37,6 +37,9 @@ const locationUuidValidation = [
 ];
 
 // Routes
+router.get('/health', (req, res) => {
+  res.json({ status: 'healthy', service: 'rooms-service', timestamp: new Date().toISOString() });
+});
 router.get('/', roomController.getAllRooms);
 router.get('/search', roomController.searchRooms);
 router.get('/:id', uuidValidation, validate, roomController.getRoomById);

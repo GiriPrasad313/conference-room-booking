@@ -51,6 +51,9 @@ const validate = (req, res, next) => {
 };
 
 // Routes
+router.get('/health', (req, res) => {
+  res.json({ status: 'healthy', service: 'auth-service', timestamp: new Date().toISOString() });
+});
 router.post('/register', registerValidation, validate, authController.register);
 router.post('/login', loginValidation, validate, authController.login);
 router.post('/refresh', authController.refreshToken);

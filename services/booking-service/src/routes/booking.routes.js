@@ -41,6 +41,11 @@ const bookingIdValidation = [
   param('id').notEmpty().withMessage('Booking ID is required')
 ];
 
+// Health check - no auth required
+router.get('/health', (req, res) => {
+  res.json({ status: 'healthy', service: 'booking-service', timestamp: new Date().toISOString() });
+});
+
 // Routes - All routes require authentication
 router.use(authenticateToken);
 

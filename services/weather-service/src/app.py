@@ -132,6 +132,16 @@ def health_check():
     }), 200
 
 
+@app.route('/api/weather/health', methods=['GET'])
+def api_health_check():
+    """Health check endpoint accessible via API gateway."""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'weather-service',
+        'timestamp': datetime.utcnow().isoformat() + 'Z'
+    }), 200
+
+
 @app.route('/api/weather/forecast', methods=['GET'])
 def get_forecast():
     """
