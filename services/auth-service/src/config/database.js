@@ -1,5 +1,8 @@
 const { Pool } = require('pg');
 
+// Configure SSL for RDS connections
+const isRDS = process.env.DB_HOST && process.env.DB_HOST.includes('rds.amazonaws.com');
+
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
@@ -8,14 +11,15 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'conferencedb',
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
+  ssl: isRDS ? { rejectUnauthorized: false } : false,
 });
 
 // Test database connection
 const initializeDatabase = async () => {
   try {
     const client = await pool.connect();
-    console.log('Connected to PostgreSQL database');
+    console.log('Connected to PostgreSQL database' + (isRDS ? ' (AWS RDS)' : ''));
     client.release();
     return true;
   } catch (error) {

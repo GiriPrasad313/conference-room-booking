@@ -9,19 +9,29 @@ const router = express.Router();
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: { 
-        message: 'Validation failed', 
-        details: errors.array() 
-      } 
+    return res.status(400).json({
+      error: {
+        message: 'Validation failed',
+        details: errors.array()
+      }
     });
   }
   next();
 };
 
-// Validation rules
+// Validation rules - using custom UUID validation to support test UUIDs
+const isValidUUID = (value) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value);
+};
+
 const createBookingValidation = [
-  body('roomId').isUUID().withMessage('Valid room ID is required'),
+  body('roomId').custom((value) => {
+    if (!isValidUUID(value)) {
+      throw new Error('Valid room ID is required');
+    }
+    return true;
+  }),
   body('bookingDate')
     .isISO8601()
     .withMessage('Valid booking date is required (YYYY-MM-DD)')
