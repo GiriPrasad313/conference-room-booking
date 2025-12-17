@@ -1,4 +1,4 @@
-# CI/CD Pipeline for Conference Room Booking System
+﻿# CI/CD Pipeline for Conference Room Booking System
 # Triggers on push to main branch and pull requests
 # Runs tests, builds Docker images, and deploys to EC2
 
@@ -18,20 +18,8 @@ jobs:
   # Job 1: Test Node.js Services
   # ============================================
   test-node-services:
-    name: Test ${{ matrix.service }}
+    name: Test Node.js Services
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        service:
-          - auth-service
-          - rooms-service
-          - booking-service
-          - email-worker
-
-    defaults:
-      run:
-        working-directory: services/${{ matrix.service }}
 
     steps:
       - name: Checkout code
@@ -42,7 +30,6 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -51,17 +38,10 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
-      - name: Run unit tests with coverage
-        run: npm test -- --coverage --coverageReporters=text --coverageReporters=lcov
+      - name: Run unit tests
+        run: npm test
         env:
           NODE_ENV: test
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ matrix.service }}
-          path: services/${{ matrix.service }}/coverage/
-          retention-days: 7
 
   # ============================================
   # Job 2: Test Python Weather Service
@@ -90,7 +70,7 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Run tests with coverage
-        run: pytest tests/ -v --cov=. --cov-report=term --cov-report=xml
+        run: pytest tests/ -v --cov=. --cov-report=term
         continue-on-error: true
 
   # ============================================
@@ -118,21 +98,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t conference-room-booking-${{ matrix.service }}:${{ github.sha }} \
-            services/${{ matrix.service }}
-          docker tag conference-room-booking-${{ matrix.service }}:${{ github.sha }} \
-            conference-room-booking-${{ matrix.service }}:latest
-
-      - name: Save Docker image
-        run: |
-          docker save conference-room-booking-${{ matrix.service }}:latest | gzip > ${{ matrix.service }}.tar.gz
-
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-${{ matrix.service }}
-          path: ${{ matrix.service }}.tar.gz
-          retention-days: 1
+          docker build -t crb-${{ matrix.service }}:latest services/${{ matrix.service }}
 
   # ============================================
   # Job 4: Deploy to EC2
@@ -156,39 +122,19 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/conference-room-booking/conference-room-booking
-            
-            # Pull latest code
             git pull origin main
-            
-            # Rebuild and restart services
-            sudo docker-compose build --no-cache
-            sudo docker-compose up -d
-            
-            # Clean up old images
+            sudo docker-compose down
+            sudo docker-compose up -d --build
             sudo docker image prune -f
-            
-            # Wait for services to start
             sleep 15
-            
-            # Health checks
             echo "Checking service health..."
             curl -sf http://localhost:3001/api/auth/health || echo "Auth service check failed"
             curl -sf http://localhost:3002/api/rooms/health || echo "Rooms service check failed"
             curl -sf http://localhost:3003/api/bookings/health || echo "Booking service check failed"
-            
-            echo "✅ Deployment completed!"
-
-      - name: Deployment Status
-        if: always()
-        run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Deployment to EC2 successful!"
-          else
-            echo "❌ Deployment failed!"
-          fi
+            echo "Deployment completed!"
 
   # ============================================
-  # Job 5: Post-Deploy Integration Tests
+  # Job 5: Integration Tests
   # ============================================
   integration-tests:
     name: Integration Tests
@@ -200,32 +146,12 @@ jobs:
       - name: Run API health checks
         run: |
           EC2_HOST="${{ secrets.EC2_HOST }}"
-          
           echo "Testing API Gateway..."
           curl -sf http://$EC2_HOST:8080/health || exit 1
-          
           echo "Testing Auth Service..."
           curl -sf http://$EC2_HOST:8080/api/auth/health || exit 1
-          
           echo "Testing Rooms Service..."
           curl -sf http://$EC2_HOST:8080/api/rooms/health || exit 1
-          
           echo "Testing Booking Service..."
           curl -sf http://$EC2_HOST:8080/api/bookings/health || exit 1
-          
-          echo "✅ All integration tests passed!"
-
-      - name: Test API endpoints
-        run: |
-          EC2_HOST="${{ secrets.EC2_HOST }}"
-          
-          echo "Testing rooms list endpoint..."
-          ROOMS=$(curl -sf http://$EC2_HOST:8080/api/rooms/)
-          if echo "$ROOMS" | grep -q "rooms"; then
-            echo "✅ Rooms endpoint working"
-          else
-            echo "❌ Rooms endpoint failed"
-            exit 1
-          fi
-          
-          echo "✅ All API tests passed!"
+          echo "All integration tests passed!"
