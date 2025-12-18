@@ -56,6 +56,10 @@ router.get('/health', (req, res) => {
   res.json({ status: 'healthy', service: 'booking-service', timestamp: new Date().toISOString() });
 });
 
+// Internal route - delete all user bookings (called by auth-service when account is deleted)
+// No auth required as this is an internal service call
+router.delete('/user/:userId', bookingController.deleteUserBookings);
+
 // Routes - All routes require authentication
 router.use(authenticateToken);
 

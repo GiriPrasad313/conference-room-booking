@@ -55,6 +55,7 @@ services:
       - JWT_EXPIRES_IN=24h
       - SQS_QUEUE_URL=${SQS_QUEUE_URL}
       - AWS_REGION=us-east-1
+      - BOOKING_SERVICE_URL=http://booking-service:3003
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,6 +93,11 @@ services:
       - WEATHER_SERVICE_URL=${WEATHER_SERVICE_URL:-https://rze67xlp2vu4gj5a4g6rc6qr6e0olvgm.lambda-url.us-east-1.on.aws}
       - ROOMS_SERVICE_URL=http://rooms-service:3002
       - AUTH_SERVICE_URL=http://auth-service:3001
+      - SQS_QUEUE_URL=${SQS_QUEUE_URL}
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
     depends_on:
       mongodb:
         condition: service_healthy

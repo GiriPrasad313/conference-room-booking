@@ -302,4 +302,23 @@ const formatBookingResponse = (booking) => ({
   updatedAt: booking.updatedAt
 });
 
-module.exports = { createBooking, getUserBookings, getBookingById, cancelBooking, checkAvailability };
+// Delete all bookings for a user (used when account is deleted)
+const deleteUserBookings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const result = await Booking.deleteMany({ userId });
+    
+    console.log(`Deleted ${result.deletedCount} bookings for user ${userId}`);
+    
+    res.json({
+      message: 'User bookings deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete user bookings error:', error);
+    res.status(500).json({ error: { message: 'Failed to delete user bookings' } });
+  }
+};
+
+module.exports = { createBooking, getUserBookings, getBookingById, cancelBooking, checkAvailability, deleteUserBookings };

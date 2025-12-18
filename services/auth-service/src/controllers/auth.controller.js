@@ -299,6 +299,17 @@ const deleteAccount = async (req, res) => {
       });
     }
 
+    // Delete all user's bookings first
+    try {
+      const axios = require('axios');
+      const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://booking-service:3003';
+      await axios.delete(`${BOOKING_SERVICE_URL}/api/bookings/user/${userId}`);
+      console.log(`Deleted all bookings for user ${userId}`);
+    } catch (error) {
+      console.error('Failed to delete user bookings:', error.message);
+      // Continue with account deletion even if booking deletion fails
+    }
+
     // Delete the user
     await query('DELETE FROM users WHERE user_id = $1', [userId]);
 
