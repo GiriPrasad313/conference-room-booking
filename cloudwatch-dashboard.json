@@ -1,0 +1,196 @@
+{
+  "widgets": [
+    {
+      "type": "text",
+      "x": 0,
+      "y": 0,
+      "width": 24,
+      "height": 1,
+      "properties": {
+        "markdown": "# Conference Room Booking System - Monitoring Dashboard"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 1,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Lambda Invocations",
+        "metrics": [
+          ["AWS/Lambda", "Invocations", "FunctionName", "email-notification-worker", {"stat": "Sum", "period": 300}],
+          ["AWS/Lambda", "Invocations", "FunctionName", "weather-service", {"stat": "Sum", "period": 300}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 1,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Lambda Errors",
+        "metrics": [
+          ["AWS/Lambda", "Errors", "FunctionName", "email-notification-worker", {"stat": "Sum", "period": 300, "color": "#d62728"}],
+          ["AWS/Lambda", "Errors", "FunctionName", "weather-service", {"stat": "Sum", "period": 300, "color": "#ff7f0e"}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 1,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Lambda Duration (ms)",
+        "metrics": [
+          ["AWS/Lambda", "Duration", "FunctionName", "email-notification-worker", {"stat": "Average", "period": 300}],
+          ["AWS/Lambda", "Duration", "FunctionName", "weather-service", {"stat": "Average", "period": 300}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 7,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "SQS Messages Sent",
+        "metrics": [
+          ["AWS/SQS", "NumberOfMessagesSent", "QueueName", "booking-notifications-queue", {"stat": "Sum", "period": 300}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 7,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "SQS Messages Received",
+        "metrics": [
+          ["AWS/SQS", "NumberOfMessagesReceived", "QueueName", "booking-notifications-queue", {"stat": "Sum", "period": 300}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 7,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "SQS Queue Depth (Backlog)",
+        "metrics": [
+          ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", "booking-notifications-queue", {"stat": "Average", "period": 60}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 60
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 13,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "SNS Messages Published",
+        "metrics": [
+          ["AWS/SNS", "NumberOfMessagesPublished", "TopicName", "booking-notifications", {"stat": "Sum", "period": 300}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 13,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "SNS Delivery Success vs Failed",
+        "metrics": [
+          ["AWS/SNS", "NumberOfNotificationsDelivered", "TopicName", "booking-notifications", {"stat": "Sum", "period": 300, "color": "#2ca02c"}],
+          ["AWS/SNS", "NumberOfNotificationsFailed", "TopicName", "booking-notifications", {"stat": "Sum", "period": 300, "color": "#d62728"}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 19,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Lambda Concurrent Executions",
+        "metrics": [
+          ["AWS/Lambda", "ConcurrentExecutions", "FunctionName", "email-notification-worker", {"stat": "Maximum", "period": 300}],
+          ["AWS/Lambda", "ConcurrentExecutions", "FunctionName", "weather-service", {"stat": "Maximum", "period": 300}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 19,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "Lambda Throttles",
+        "metrics": [
+          ["AWS/Lambda", "Throttles", "FunctionName", "email-notification-worker", {"stat": "Sum", "period": 300, "color": "#d62728"}],
+          ["AWS/Lambda", "Throttles", "FunctionName", "weather-service", {"stat": "Sum", "period": 300, "color": "#ff7f0e"}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 19,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "SQS Age of Oldest Message",
+        "metrics": [
+          ["AWS/SQS", "ApproximateAgeOfOldestMessage", "QueueName", "booking-notifications-queue", {"stat": "Maximum", "period": 60}]
+        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
+        "period": 60
+      }
+    }
+  ]
+}
