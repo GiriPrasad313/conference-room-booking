@@ -220,7 +220,10 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
-                                <input type="password" class="form-control" id="regPassword" required minlength="6">
+                                <input type="password" class="form-control" id="regPassword" required minlength="8"
+                                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                                       title="Password must be at least 8 characters with uppercase, lowercase, and a number">
+                                <small class="text-muted">Min 8 chars, with uppercase, lowercase & number</small>
                             </div>
                             <button type="submit" class="btn btn-success w-100">
                                 <i class="bi bi-person-plus"></i> Register
@@ -590,7 +593,12 @@
                     document.getElementById('loginTab').click();
                     document.getElementById('loginEmail').value = document.getElementById('regEmail').value;
                 } else {
-                    showToast(data.error?.message || 'Registration failed', 'error');
+                    // Show detailed validation errors
+                    let errorMsg = data.error?.message || 'Registration failed';
+                    if (data.error?.details && Array.isArray(data.error.details)) {
+                        errorMsg = data.error.details.map(d => d.msg).join(', ');
+                    }
+                    showToast(errorMsg, 'error');
                 }
             } catch (err) {
                 showToast('Connection error. Please try again.', 'error');
