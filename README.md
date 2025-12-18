@@ -262,3 +262,5 @@ This project was developed for DevOps Assignment 2 (December 2025) following the
 ## 📄 License
 
 This project is for educational purposes as part of university coursework.
+#   D e p l o y m e n t   t r i g g e r e d   2 0 2 5 - 1 2 - 1 8   1 5 : 4 7 : 2 9  
+ 
