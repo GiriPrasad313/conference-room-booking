@@ -8,7 +8,7 @@ const AWS = require('aws-sdk');
 AWS.config.update({ region: process.env.AWS_REGION || 'us-east-1' });
 const sqs = new AWS.SQS();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production-min-32-chars';
+const JWT_SECRET = process.env.JWT_SECRET || 'ConferenceBookSecretKey2024ProductionSecure';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 const SALT_ROUNDS = 10;
 const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL || '';

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production-min-32-chars';
+const JWT_SECRET = process.env.JWT_SECRET || 'ConferenceBookSecretKey2024ProductionSecure';
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];

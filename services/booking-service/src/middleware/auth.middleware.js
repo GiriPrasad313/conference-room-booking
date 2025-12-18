@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production-min-32-chars';
+const JWT_SECRET = process.env.JWT_SECRET || 'ConferenceBookSecretKey2024ProductionSecure';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 
 const authenticateToken = async (req, res, next) => {

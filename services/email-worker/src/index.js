@@ -151,7 +151,7 @@ const sendEmail = async (to, type, data) => {
   
   try {
     const result = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"Conference Room Booking" <noreply@booking.example.com>',
+      from: process.env.EMAIL_FROM || '"ConferenceBook" <noreply@conferencebook.app>',
       to,
       subject,
       text,

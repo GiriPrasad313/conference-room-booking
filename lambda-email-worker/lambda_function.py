@@ -44,24 +44,24 @@ def lambda_handler(event, context):
             
             # Create email content based on event type
             if event_type == 'BOOKING_CREATED':
-                subject = f"✅ Booking Confirmed - {room_name}"
+                subject = f"Booking Confirmed - {room_name}"
                 message = create_booking_confirmation_email(
                     user_name, room_name, location_name, formatted_date, 
                     start_time, end_time, booking_id
                 )
             elif event_type == 'BOOKING_CANCELLED':
-                subject = f"❌ Booking Cancelled - {room_name}"
+                subject = f"Booking Cancelled - {room_name}"
                 message = create_cancellation_email(
                     user_name, room_name, location_name, formatted_date, booking_id
                 )
             elif event_type == 'USER_REGISTERED':
-                subject = f"🎉 Welcome to ConferenceBook!"
+                subject = "Welcome to ConferenceBook"
                 message = create_welcome_email(user_name, user_email)
             elif event_type == 'ACCOUNT_DELETED':
-                subject = f"👋 Account Deleted - ConferenceBook"
+                subject = "Account Deleted - ConferenceBook"
                 message = create_account_deleted_email(user_name, user_email)
             else:
-                subject = f"📋 Booking Update - {room_name}"
+                subject = f"Booking Update - {room_name}"
                 message = create_generic_email(
                     user_name, room_name, location_name, formatted_date, 
                     event_type, booking_id
@@ -105,178 +105,178 @@ def lambda_handler(event, context):
 
 
 def create_booking_confirmation_email(user_name, room_name, location_name, date, start_time, end_time, booking_id):
-    """Create a nicely formatted booking confirmation email."""
+    """Create a formatted booking confirmation email."""
     return f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       BOOKING CONFIRMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
+                         BOOKING CONFIRMATION
+================================================================================
 
-Hello {user_name}!
+Hello {user_name},
 
 Your conference room booking has been confirmed.
 
-📍 BOOKING DETAILS
-─────────────────────────────────────────────
-   Room:     {room_name}
-   Location: {location_name}
-   Date:     {date}
-   Time:     {start_time} - {end_time}
-─────────────────────────────────────────────
+BOOKING DETAILS
+--------------------------------------------------------------------------------
+    Room:       {room_name}
+    Location:   {location_name}
+    Date:       {date}
+    Time:       {start_time} - {end_time}
+--------------------------------------------------------------------------------
 
-📋 Booking Reference: {booking_id}
+Booking Reference: {booking_id}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
 IMPORTANT REMINDERS:
-• Please arrive 5 minutes before your booking
-• Cancel at least 24 hours in advance if needed
-• Contact support for any assistance
+- Please arrive 5 minutes before your booking
+- Cancel at least 24 hours in advance if needed
+- Contact support for any assistance
 
-Thank you for using ConferenceBook!
+Thank you for using ConferenceBook.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 This is an automated message from ConferenceBook.
+Do not reply to this email.
 """
 
 
 def create_cancellation_email(user_name, room_name, location_name, date, booking_id):
     """Create a booking cancellation email."""
     return f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       BOOKING CANCELLED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
+                         BOOKING CANCELLED
+================================================================================
 
 Hello {user_name},
 
 Your booking has been successfully cancelled.
 
-📍 CANCELLED BOOKING DETAILS
-─────────────────────────────────────────────
-   Room:     {room_name}
-   Location: {location_name}
-   Date:     {date}
-─────────────────────────────────────────────
+CANCELLED BOOKING DETAILS
+--------------------------------------------------------------------------------
+    Room:       {room_name}
+    Location:   {location_name}
+    Date:       {date}
+--------------------------------------------------------------------------------
 
-📋 Booking Reference: {booking_id}
+Booking Reference: {booking_id}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
 Need to book again? Visit our booking portal.
 
-Thank you for using ConferenceBook!
+Thank you for using ConferenceBook.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 This is an automated message from ConferenceBook.
+Do not reply to this email.
 """
 
 
 def create_welcome_email(user_name, user_email):
     """Create a welcome email for new users."""
     return f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   🎉 WELCOME TO CONFERENCEBOOK! 🎉
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
+                      WELCOME TO CONFERENCEBOOK
+================================================================================
 
-Hello {user_name}!
+Hello {user_name},
 
-Welcome to ConferenceBook - your smart conference 
-room booking solution!
+Welcome to ConferenceBook - your conference room booking solution.
 
 Your account has been created successfully.
 
-📧 Registered Email: {user_email}
+Registered Email: {user_email}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
 WHAT YOU CAN DO:
-─────────────────────────────────────────────
-✓ Browse available conference rooms
-✓ Check real-time availability
-✓ Book rooms with weather-based dynamic pricing
-✓ Manage and reschedule your bookings
-✓ Receive email confirmations
-─────────────────────────────────────────────
+--------------------------------------------------------------------------------
+- Browse available conference rooms
+- Check real-time availability
+- Book rooms with weather-based dynamic pricing
+- Manage and reschedule your bookings
+- Receive email confirmations
+--------------------------------------------------------------------------------
 
-🌤️ FUN FEATURE: Our system uses weather forecasts
-   to provide dynamic pricing - book on pleasant
-   days for potential discounts!
+Our system uses weather forecasts to provide dynamic pricing - book on 
+pleasant days for potential discounts.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
 Ready to book your first room?
-Login and explore our available spaces!
+Login and explore our available spaces.
 
-Thank you for choosing ConferenceBook!
+Thank you for choosing ConferenceBook.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 This is an automated message from ConferenceBook.
+Do not reply to this email.
 """
 
 
 def create_account_deleted_email(user_name, user_email):
     """Create an account deletion confirmation email."""
     return f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       ACCOUNT DELETED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
+                         ACCOUNT DELETED
+================================================================================
 
 Hello {user_name},
 
-Your ConferenceBook account has been successfully 
-deleted as requested.
+Your ConferenceBook account has been successfully deleted as requested.
 
-📧 Deleted Account: {user_email}
+Deleted Account: {user_email}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
 WHAT THIS MEANS:
-─────────────────────────────────────────────
-• Your account data has been removed
-• Any active bookings have been cancelled
-• You will no longer receive notifications
-─────────────────────────────────────────────
+--------------------------------------------------------------------------------
+- Your account data has been removed
+- Any active bookings have been cancelled
+- You will no longer receive notifications
+--------------------------------------------------------------------------------
 
-We're sorry to see you go! If you change your 
-mind, you're always welcome to create a new 
-account at any time.
+If you change your mind, you are welcome to create a new account at any time.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
-If you did not request this deletion, please 
-contact our support team immediately.
+If you did not request this deletion, please contact our support team 
+immediately.
 
-Thank you for using ConferenceBook!
+Thank you for using ConferenceBook.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 This is an automated message from ConferenceBook.
+Do not reply to this email.
 """
 
 
 def create_generic_email(user_name, room_name, location_name, date, event_type, booking_id):
     """Create a generic booking update email."""
     return f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       BOOKING UPDATE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
+                         BOOKING UPDATE
+================================================================================
 
 Hello {user_name},
 
 There has been an update to your booking.
 
-📍 BOOKING DETAILS
-─────────────────────────────────────────────
-   Room:     {room_name}
-   Location: {location_name}
-   Date:     {date}
-   Status:   {event_type.replace('_', ' ').title()}
-─────────────────────────────────────────────
+BOOKING DETAILS
+--------------------------------------------------------------------------------
+    Room:       {room_name}
+    Location:   {location_name}
+    Date:       {date}
+    Status:     {event_type.replace('_', ' ').title()}
+--------------------------------------------------------------------------------
 
-📋 Booking Reference: {booking_id}
+Booking Reference: {booking_id}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
-Thank you for using ConferenceBook!
+Thank you for using ConferenceBook.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 This is an automated message from ConferenceBook.
+Do not reply to this email.
 """
