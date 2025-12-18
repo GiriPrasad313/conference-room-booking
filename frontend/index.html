@@ -750,8 +750,11 @@
                 
                 if (weatherResponse.ok) {
                     const weatherData = await weatherResponse.json();
-                    const temp = weatherData.forecast?.temperature || weatherData.temperature || 15;
-                    const condition = weatherData.forecast?.condition || weatherData.condition || 'Mild';
+                    // Handle temperature object structure from Lambda
+                    const temp = typeof weatherData.temperature === 'object' 
+                        ? weatherData.temperature.current 
+                        : weatherData.temperature || 15;
+                    const condition = weatherData.condition || 'Mild';
                     
                     // Calculate price adjustment based on weather
                     let adjustment = 0;
