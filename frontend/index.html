@@ -161,8 +161,17 @@
                     <button class="btn btn-primary" onclick="showSection('register')">Register</button>
                 </div>
                 <div id="userInfo" class="hidden">
-                    <span class="me-3"><i class="bi bi-person-circle"></i> <span id="userName"></span></span>
-                    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span id="userName"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="showSection('bookings')"><i class="bi bi-calendar-check"></i> My Bookings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="openDeleteAccountModal()"><i class="bi bi-trash"></i> Delete Account</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -530,6 +539,48 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Delete Account Confirmation Modal -->
+        <div class="modal fade" id="deleteAccountModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Delete Account</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-person-x text-danger" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">Are you sure you want to delete your account?</h5>
+                            <p class="text-muted">This action is permanent and cannot be undone.</p>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>Warning:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>All your bookings will be cancelled</li>
+                                <li>Your account data will be permanently deleted</li>
+                                <li>You will need to create a new account to use the service</li>
+                            </ul>
+                        </div>
+                        <form id="deleteAccountForm" onsubmit="confirmDeleteAccount(event)">
+                            <div class="mb-3">
+                                <label class="form-label">Enter your password to confirm:</label>
+                                <input type="password" class="form-control" id="deleteAccountPassword" required 
+                                       placeholder="Enter your password">
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash"></i> Permanently Delete My Account
+                                </button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-arrow-left"></i> Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -706,6 +757,58 @@
             updateUIForLoggedOut();
             showToast('Logged out successfully', 'info');
             showSection('auth');
+        }
+        
+        // Delete Account
+        function openDeleteAccountModal() {
+            document.getElementById('deleteAccountPassword').value = '';
+            new bootstrap.Modal(document.getElementById('deleteAccountModal')).show();
+        }
+        
+        async function confirmDeleteAccount(e) {
+            e.preventDefault();
+            const password = document.getElementById('deleteAccountPassword').value;
+            
+            if (!password) {
+                showToast('Please enter your password to confirm', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/auth/account`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteAccountModal')).hide();
+                    // Clear local data
+                    authToken = null;
+                    currentUser = null;
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                    updateUIForLoggedOut();
+                    showToast('Your account has been deleted. We\'re sorry to see you go!', 'success');
+                    showSection('auth');
+                } else {
+                    let errorMsg = data.error?.message || 'Failed to delete account';
+                    if (response.status === 401) {
+                        errorMsg = 'Incorrect password. Please try again.';
+                    }
+                    showToast(errorMsg, 'error');
+                }
+            } catch (err) {
+                console.error('Delete account error:', err);
+                showToast('Connection error. Please try again.', 'error');
+            }
+            hideLoading();
         }
 
         function updateUIForLoggedIn() {

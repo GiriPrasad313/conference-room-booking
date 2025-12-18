@@ -271,10 +271,91 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+// Delete user account
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { password } = req.body;
+
+    // Verify the user exists and get their data
+    const userResult = await query(
+      'SELECT * FROM users WHERE user_id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: { message: 'User not found' } 
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify password before deletion
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ 
+        error: { message: 'Incorrect password. Account deletion cancelled.' } 
+      });
+    }
+
+    // Delete the user
+    await query('DELETE FROM users WHERE user_id = $1', [userId]);
+
+    // Send account deletion notification
+    await sendAccountDeletionNotification({
+      userId: user.user_id,
+      email: user.email,
+      firstName: user.first_name
+    });
+
+    res.json({
+      message: 'Account deleted successfully. We\'re sorry to see you go!'
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ 
+      error: { message: 'Failed to delete account' } 
+    });
+  }
+};
+
+// Send account deletion notification to SQS
+const sendAccountDeletionNotification = async (user) => {
+  if (!SQS_QUEUE_URL) {
+    console.log('SQS_QUEUE_URL not configured, skipping deletion notification');
+    return;
+  }
+  
+  try {
+    const message = {
+      bookingId: `deleted-${user.userId}`,
+      userEmail: user.email,
+      userName: user.firstName,
+      roomName: 'ConferenceBook',
+      locationName: 'Account',
+      date: new Date().toISOString().split('T')[0],
+      startTime: '',
+      endTime: '',
+      eventType: 'ACCOUNT_DELETED'
+    };
+    
+    await sqs.sendMessage({
+      QueueUrl: SQS_QUEUE_URL,
+      MessageBody: JSON.stringify(message)
+    }).promise();
+    
+    console.log(`Account deletion notification sent for user ${user.email}`);
+  } catch (error) {
+    console.error('Failed to send deletion notification:', error.message);
+  }
+};
+
 module.exports = {
   register,
   login,
   refreshToken,
   validateToken,
-  getCurrentUser
+  getCurrentUser,
+  deleteAccount
 };

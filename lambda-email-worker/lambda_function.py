@@ -57,6 +57,9 @@ def lambda_handler(event, context):
             elif event_type == 'USER_REGISTERED':
                 subject = f"🎉 Welcome to ConferenceBook!"
                 message = create_welcome_email(user_name, user_email)
+            elif event_type == 'ACCOUNT_DELETED':
+                subject = f"👋 Account Deleted - ConferenceBook"
+                message = create_account_deleted_email(user_name, user_email)
             else:
                 subject = f"📋 Booking Update - {room_name}"
                 message = create_generic_email(
@@ -204,6 +207,45 @@ Ready to book your first room?
 Login and explore our available spaces!
 
 Thank you for choosing ConferenceBook!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This is an automated message from ConferenceBook.
+"""
+
+
+def create_account_deleted_email(user_name, user_email):
+    """Create an account deletion confirmation email."""
+    return f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       ACCOUNT DELETED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hello {user_name},
+
+Your ConferenceBook account has been successfully 
+deleted as requested.
+
+📧 Deleted Account: {user_email}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT THIS MEANS:
+─────────────────────────────────────────────
+• Your account data has been removed
+• Any active bookings have been cancelled
+• You will no longer receive notifications
+─────────────────────────────────────────────
+
+We're sorry to see you go! If you change your 
+mind, you're always welcome to create a new 
+account at any time.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If you did not request this deletion, please 
+contact our support team immediately.
+
+Thank you for using ConferenceBook!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 This is an automated message from ConferenceBook.

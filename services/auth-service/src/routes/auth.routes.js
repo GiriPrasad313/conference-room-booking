@@ -36,6 +36,12 @@ const loginValidation = [
     .withMessage('Password is required')
 ];
 
+const deleteAccountValidation = [
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required to confirm account deletion')
+];
+
 // Validation middleware
 const validate = (req, res, next) => {
   const errors = validationResult(req);
@@ -59,5 +65,6 @@ router.post('/login', loginValidation, validate, authController.login);
 router.post('/refresh', authController.refreshToken);
 router.get('/validate', authenticateToken, authController.validateToken);
 router.get('/me', authenticateToken, authController.getCurrentUser);
+router.delete('/account', authenticateToken, deleteAccountValidation, validate, authController.deleteAccount);
 
 module.exports = router;
