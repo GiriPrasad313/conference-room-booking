@@ -123,9 +123,9 @@ jobs:
           script: |
             cd ~/conference-room-booking/conference-room-booking
             git pull origin main
-            sudo docker-compose down
-            sudo docker-compose up -d --build
-            sudo docker image prune -f
+            docker-compose down
+            docker-compose up -d --build
+            docker image prune -f
             sleep 15
             echo "Checking service health..."
             curl -sf http://localhost:3001/api/auth/health || echo "Auth service check failed"
@@ -155,3 +155,4 @@ jobs:
           echo "Testing Booking Service..."
           curl -sf http://$EC2_HOST:8080/api/bookings/health || exit 1
           echo "All integration tests passed!"
+
