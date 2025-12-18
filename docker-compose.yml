@@ -53,6 +53,8 @@ services:
       - DB_NAME=conferencedb
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production-min-32-chars
       - JWT_EXPIRES_IN=24h
+      - SQS_QUEUE_URL=${SQS_QUEUE_URL}
+      - AWS_REGION=us-east-1
     depends_on:
       postgres:
         condition: service_healthy

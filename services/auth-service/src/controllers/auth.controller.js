@@ -3,9 +3,47 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { query } = require('../config/database');
 
+// AWS SDK for sending notifications
+const AWS = require('aws-sdk');
+AWS.config.update({ region: process.env.AWS_REGION || 'us-east-1' });
+const sqs = new AWS.SQS();
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production-min-32-chars';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 const SALT_ROUNDS = 10;
+const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL || '';
+
+// Send welcome notification to SQS
+const sendWelcomeNotification = async (user) => {
+  if (!SQS_QUEUE_URL) {
+    console.log('SQS_QUEUE_URL not configured, skipping welcome notification');
+    return;
+  }
+  
+  try {
+    const message = {
+      bookingId: `welcome-${user.userId}`,
+      userEmail: user.email,
+      userName: user.firstName,
+      roomName: 'ConferenceBook',
+      locationName: 'Welcome',
+      date: new Date().toISOString().split('T')[0],
+      startTime: '',
+      endTime: '',
+      eventType: 'USER_REGISTERED'
+    };
+    
+    await sqs.sendMessage({
+      QueueUrl: SQS_QUEUE_URL,
+      MessageBody: JSON.stringify(message)
+    }).promise();
+    
+    console.log(`Welcome notification sent for user ${user.email}`);
+  } catch (error) {
+    console.error('Failed to send welcome notification:', error.message);
+    // Don't fail registration if notification fails
+  }
+};
 
 // Generate JWT token
 const generateToken = (user) => {
@@ -61,6 +99,14 @@ const register = async (req, res) => {
     const user = result.rows[0];
     const token = generateToken(user);
     const refreshToken = generateRefreshToken(user);
+
+    // Send welcome email notification
+    await sendWelcomeNotification({
+      userId: user.user_id,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name
+    });
 
     res.status(201).json({
       message: 'User registered successfully',
