@@ -855,13 +855,13 @@
                             <div class="card booking-card ${booking.status}">
                                 <div class="card-body">
                                     <h5 class="card-title">${booking.room?.name || 'Conference Room'}</h5>
-                                    <p class="text-muted"><i class="bi bi-geo-alt"></i> ${booking.room?.location?.name || 'Location'}</p>
+                                    <p class="text-muted"><i class="bi bi-geo-alt"></i> ${booking.location?.name || 'Location'}</p>
                                     <hr>
                                     <p><i class="bi bi-calendar"></i> <strong>${new Date(booking.bookingDate).toLocaleDateString('en-GB', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</strong></p>
-                                    <p><i class="bi bi-thermometer-half"></i> Weather: ${booking.forecastedTemp || 'N/A'}°C</p>
+                                    <p><i class="bi bi-thermometer-half"></i> Weather: ${booking.weather?.forecastedTemp || 'N/A'}°C - ${booking.weather?.condition || ''}</p>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="badge bg-${booking.status === 'confirmed' ? 'success' : 'warning'}">${booking.status}</span>
-                                        <span class="price-tag">£${booking.finalPrice}</span>
+                                        <span class="price-tag">£${booking.pricing?.finalPrice || booking.pricing?.basePrice || 'N/A'}</span>
                                     </div>
                                 </div>
                                 <div class="card-footer text-muted">
