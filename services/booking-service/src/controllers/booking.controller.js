@@ -56,17 +56,22 @@ const sendBookingNotification = async (booking, eventType) => {
     AWS.config.update({ region: AWS_REGION });
     const sqs = new AWS.SQS();
     
+    // Format the booking date nicely
+    const bookingDateStr = booking.bookingDate.toISOString().split('T')[0];
+    
     const message = {
       bookingId: booking.bookingId,
       userEmail: booking.userEmail,
       userName: booking.userEmail.split('@')[0],
       roomName: booking.roomName,
       locationName: booking.locationName,
-      date: booking.bookingDate.toISOString().split('T')[0],
-      startTime: '09:00',
-      endTime: '17:00',
+      date: bookingDateStr,
+      startTime: 'Full Day',
+      endTime: 'Booking',
       eventType: eventType
     };
+    
+    console.log(`Sending ${eventType} notification to SQS:`, JSON.stringify(message));
     
     await sqs.sendMessage({
       QueueUrl: SQS_QUEUE_URL,
