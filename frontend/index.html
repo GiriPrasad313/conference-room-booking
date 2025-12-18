@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conference Room Booking System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255,255,255,0.95) !important;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        .main-container {
+            padding-top: 80px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .room-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .room-card .room-header {
+            background: linear-gradient(135deg, var(--accent-color), #2980b9);
+            color: white;
+            padding: 20px;
+        }
+        .badge-amenity {
+            background: #e8f4fc;
+            color: var(--accent-color);
+            margin: 2px;
+            font-weight: 500;
+        }
+        .price-tag {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success-color);
+        }
+        .weather-info {
+            background: linear-gradient(135deg, #f6d365, #fda085);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+        }
+        .booking-card {
+            border-left: 4px solid var(--accent-color);
+        }
+        .booking-card.confirmed {
+            border-left-color: var(--success-color);
+        }
+        .booking-card.pending {
+            border-left-color: var(--warning-color);
+        }
+        .btn-book {
+            background: linear-gradient(135deg, var(--success-color), #219a52);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .btn-book:hover {
+            background: linear-gradient(135deg, #219a52, var(--success-color));
+        }
+        .auth-card {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .nav-pills .nav-link.active {
+            background: var(--accent-color);
+        }
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .section-title {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        .location-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        #loadingSpinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+        .hidden { display: none !important; }
+        .service-status {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .service-status.online { background: #d4edda; color: #155724; }
+        .service-status.offline { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-building text-primary"></i> ConferenceBook
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('rooms')">
+                            <i class="bi bi-door-open"></i> Rooms
+                        </a>
+                    </li>
+                    <li class="nav-item auth-required hidden">
+                        <a class="nav-link" href="#" onclick="showSection('bookings')">
+                            <i class="bi bi-calendar-check"></i> My Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('status')">
+                            <i class="bi bi-activity"></i> Status
+                        </a>
+                    </li>
+                </ul>
+                <div id="authButtons">
+                    <button class="btn btn-outline-primary me-2" onclick="showSection('login')">Login</button>
+                    <button class="btn btn-primary" onclick="showSection('register')">Register</button>
+                </div>
+                <div id="userInfo" class="hidden">
+                    <span class="me-3"><i class="bi bi-person-circle"></i> <span id="userName"></span></span>
+                    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="hidden">
+        <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container container">
+        
+        <!-- Auth Section -->
+        <div id="authSection" class="py-5">
+            <div class="auth-card card p-4">
+                <ul class="nav nav-pills nav-justified mb-4" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="loginTab" data-bs-toggle="pill" href="#loginForm">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="registerTab" data-bs-toggle="pill" href="#registerForm">Register</a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <!-- Login Form -->
+                    <div class="tab-pane fade show active" id="loginForm">
+                        <form onsubmit="handleLogin(event)">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="loginEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </button>
+                        </form>
+                    </div>
+                    <!-- Register Form -->
+                    <div class="tab-pane fade" id="registerForm">
+                        <form onsubmit="handleRegister(event)">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="regFirstName" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="regLastName" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="regEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" id="regPassword" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-person-plus"></i> Register
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rooms Section -->
+        <div id="roomsSection" class="py-4 hidden">
+            <h2 class="section-title text-center">
+                <i class="bi bi-building"></i> Available Conference Rooms
+            </h2>
+            
+            <!-- Filters -->
+            <div class="card p-3 mb-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Location</label>
+                        <select class="form-select" id="filterLocation" onchange="filterRooms()">
+                            <option value="">All Locations</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Min Capacity</label>
+                        <input type="number" class="form-control" id="filterCapacity" placeholder="Any" onchange="filterRooms()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Max Price (£)</label>
+                        <input type="number" class="form-control" id="filterPrice" placeholder="Any" onchange="filterRooms()">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4" id="roomsGrid">
+                <!-- Rooms will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Book Room Section -->
+        <div id="bookRoomSection" class="py-4 hidden">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0"><i class="bi bi-calendar-plus"></i> Book Room</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 id="bookRoomName"></h5>
+                                    <p class="text-muted" id="bookRoomLocation"></p>
+                                    <p><i class="bi bi-people"></i> Capacity: <span id="bookRoomCapacity"></span></p>
+                                    <p class="price-tag">Base Price: £<span id="bookRoomPrice"></span>/day</p>
+                                    <input type="hidden" id="bookRoomId">
+                                </div>
+                                <div class="col-md-6">
+                                    <form onsubmit="handleBooking(event)">
+                                        <div class="mb-3">
+                                            <label class="form-label">Booking Date</label>
+                                            <input type="date" class="form-control" id="bookingDate" required 
+                                                   onchange="checkWeatherPrice()">
+                                        </div>
+                                        <div id="weatherPriceInfo" class="weather-info mb-3 hidden">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="bi bi-cloud-sun fs-4"></i>
+                                                    <span id="weatherCondition"></span>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small>Temperature</small>
+                                                    <div id="weatherTemp" class="fw-bold"></div>
+                                                </div>
+                                            </div>
+                                            <hr class="my-2" style="border-color: rgba(255,255,255,0.3)">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Price Adjustment:</span>
+                                                <span id="priceAdjustment" class="fw-bold"></span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <span>Final Price:</span>
+                                                <span class="fw-bold fs-5">£<span id="finalPrice"></span></span>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-book btn-success w-100">
+                                            <i class="bi bi-check-circle"></i> Confirm Booking
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-outline-secondary" onclick="showSection('rooms')">
+                                <i class="bi bi-arrow-left"></i> Back to Rooms
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Bookings Section -->
+        <div id="bookingsSection" class="py-4 hidden">
+            <h2 class="section-title text-center">
+                <i class="bi bi-calendar-check"></i> My Bookings
+            </h2>
+            <div class="row g-4" id="bookingsGrid">
+                <!-- Bookings will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div id="statusSection" class="py-4 hidden">
+            <h2 class="section-title text-center">
+                <i class="bi bi-activity"></i> System Status
+            </h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Microservices Health</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Service</th>
+                                            <th>Endpoint</th>
+                                            <th>Status</th>
+                                            <th>Response Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="serviceStatusTable">
+                                        <!-- Status will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button class="btn btn-primary mt-3" onclick="checkAllServices()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh Status
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Architecture Info -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Architecture Overview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <i class="bi bi-shield-lock fs-2 text-primary"></i>
+                                        <h6 class="mt-2">Auth Service</h6>
+                                        <small class="text-muted">JWT Authentication<br>PostgreSQL (RDS)</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <i class="bi bi-door-open fs-2 text-success"></i>
+                                        <h6 class="mt-2">Rooms Service</h6>
+                                        <small class="text-muted">Room Management<br>PostgreSQL (RDS)</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <i class="bi bi-calendar-check fs-2 text-warning"></i>
+                                        <h6 class="mt-2">Booking Service</h6>
+                                        <small class="text-muted">Reservations<br>MongoDB</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <i class="bi bi-cloud-sun fs-2 text-info"></i>
+                                        <h6 class="mt-2">Weather Service</h6>
+                                        <small class="text-muted">Dynamic Pricing<br>AWS Lambda</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row text-center">
+                                <div class="col-md-4 mb-3">
+                                    <i class="bi bi-envelope fs-3 text-danger"></i>
+                                    <h6>Email Worker</h6>
+                                    <small class="text-muted">AWS Lambda + SQS</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <i class="bi bi-hdd-stack fs-3 text-secondary"></i>
+                                    <h6>API Gateway</h6>
+                                    <small class="text-muted">Nginx Reverse Proxy</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <i class="bi bi-box fs-3 text-dark"></i>
+                                    <h6>Containerization</h6>
+                                    <small class="text-muted">Docker on EC2</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Booking Success Modal -->
+    <div class="modal fade" id="bookingSuccessModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-5">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h3 class="mt-3">Booking Confirmed!</h3>
+                    <p class="text-muted">Your conference room has been successfully booked.</p>
+                    <p><strong>Booking ID:</strong> <span id="confirmedBookingId"></span></p>
+                    <p class="text-muted"><small>A confirmation email will be sent shortly.</small></p>
+                    <div class="mt-4">
+                        <button class="btn btn-primary" data-bs-dismiss="modal" onclick="showSection('bookings')">
+                            View My Bookings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_BASE = window.location.port === '8080' || window.location.port === ''
+            ? `${window.location.protocol}//${window.location.hostname}:8080/api`
+            : `${window.location.protocol}//${window.location.hostname}:8080/api`;
+        
+        const WEATHER_LAMBDA_URL = 'https://rze67xlp2vu4gj5a4g6rc6qr6e0olvgm.lambda-url.us-east-1.on.aws';
+        
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        let allRooms = [];
+        let allLocations = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (authToken && currentUser) {
+                updateUIForLoggedIn();
+                showSection('rooms');
+            } else {
+                showSection('auth');
+            }
+            loadLocations();
+            loadRooms();
+            
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('bookingDate').min = today;
+        });
+
+        // Show/Hide Sections
+        function showSection(section) {
+            document.querySelectorAll('[id$="Section"]').forEach(el => el.classList.add('hidden'));
+            
+            switch(section) {
+                case 'auth':
+                case 'login':
+                    document.getElementById('authSection').classList.remove('hidden');
+                    document.getElementById('loginTab').click();
+                    break;
+                case 'register':
+                    document.getElementById('authSection').classList.remove('hidden');
+                    document.getElementById('registerTab').click();
+                    break;
+                case 'rooms':
+                    document.getElementById('roomsSection').classList.remove('hidden');
+                    loadRooms();
+                    break;
+                case 'bookRoom':
+                    document.getElementById('bookRoomSection').classList.remove('hidden');
+                    break;
+                case 'bookings':
+                    document.getElementById('bookingsSection').classList.remove('hidden');
+                    loadMyBookings();
+                    break;
+                case 'status':
+                    document.getElementById('statusSection').classList.remove('hidden');
+                    checkAllServices();
+                    break;
+            }
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = 'toast-' + Date.now();
+            const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+            
+            const toastHTML = `
+                <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
+                    <div class="toast-body d-flex justify-content-between align-items-center">
+                        ${message}
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            const toast = new bootstrap.Toast(document.getElementById(toastId));
+            toast.show();
+        }
+
+        // Loading Spinner
+        function showLoading() { document.getElementById('loadingSpinner').classList.remove('hidden'); }
+        function hideLoading() { document.getElementById('loadingSpinner').classList.add('hidden'); }
+
+        // Auth Functions
+        async function handleLogin(e) {
+            e.preventDefault();
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    updateUIForLoggedIn();
+                    showToast('Login successful!', 'success');
+                    showSection('rooms');
+                } else {
+                    showToast(data.error?.message || 'Login failed', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error. Please try again.', 'error');
+            }
+            hideLoading();
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('regEmail').value,
+                        password: document.getElementById('regPassword').value,
+                        firstName: document.getElementById('regFirstName').value,
+                        lastName: document.getElementById('regLastName').value
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast('Registration successful! Please login.', 'success');
+                    document.getElementById('loginTab').click();
+                    document.getElementById('loginEmail').value = document.getElementById('regEmail').value;
+                } else {
+                    showToast(data.error?.message || 'Registration failed', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error. Please try again.', 'error');
+            }
+            hideLoading();
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            updateUIForLoggedOut();
+            showToast('Logged out successfully', 'info');
+            showSection('auth');
+        }
+
+        function updateUIForLoggedIn() {
+            document.getElementById('authButtons').classList.add('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('userName').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+            document.querySelectorAll('.auth-required').forEach(el => el.classList.remove('hidden'));
+        }
+
+        function updateUIForLoggedOut() {
+            document.getElementById('authButtons').classList.remove('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            document.querySelectorAll('.auth-required').forEach(el => el.classList.add('hidden'));
+        }
+
+        // Load Locations
+        async function loadLocations() {
+            try {
+                const response = await fetch(`${API_BASE}/locations/`);
+                const data = await response.json();
+                allLocations = data.locations || [];
+                const select = document.getElementById('filterLocation');
+                select.innerHTML = '<option value="">All Locations</option>';
+                allLocations.forEach(loc => {
+                    select.innerHTML += `<option value="${loc.locationId}">${loc.name} - ${loc.city}</option>`;
+                });
+            } catch (err) {
+                console.error('Failed to load locations:', err);
+            }
+        }
+
+        // Load Rooms
+        async function loadRooms() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/rooms/`);
+                const data = await response.json();
+                allRooms = data.rooms || [];
+                renderRooms(allRooms);
+            } catch (err) {
+                showToast('Failed to load rooms', 'error');
+            }
+            hideLoading();
+        }
+
+        function renderRooms(rooms) {
+            const grid = document.getElementById('roomsGrid');
+            if (rooms.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center text-white"><h4>No rooms found matching your criteria</h4></div>';
+                return;
+            }
+            grid.innerHTML = rooms.map(room => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="room-card h-100">
+                        <div class="room-header">
+                            <h5 class="mb-1">${room.name}</h5>
+                            <small><i class="bi bi-geo-alt"></i> ${room.location?.name || 'Unknown'}, ${room.location?.city || ''}</small>
+                        </div>
+                        <div class="p-3">
+                            <p class="text-muted mb-2">${room.description || 'Conference room'}</p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span><i class="bi bi-people"></i> ${room.capacity} people</span>
+                                <span class="price-tag">£${room.basePrice}</span>
+                            </div>
+                            <div class="mb-3">
+                                ${(room.amenities || []).map(a => `<span class="badge badge-amenity">${a}</span>`).join('')}
+                            </div>
+                            <button class="btn btn-book btn-success w-100" onclick="openBookRoom('${room.roomId}')">
+                                <i class="bi bi-calendar-plus"></i> Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterRooms() {
+            const locationId = document.getElementById('filterLocation').value;
+            const minCapacity = parseInt(document.getElementById('filterCapacity').value) || 0;
+            const maxPrice = parseInt(document.getElementById('filterPrice').value) || Infinity;
+            
+            const filtered = allRooms.filter(room => {
+                if (locationId && room.locationId !== locationId) return false;
+                if (room.capacity < minCapacity) return false;
+                if (room.basePrice > maxPrice) return false;
+                return true;
+            });
+            renderRooms(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('filterLocation').value = '';
+            document.getElementById('filterCapacity').value = '';
+            document.getElementById('filterPrice').value = '';
+            renderRooms(allRooms);
+        }
+
+        // Book Room
+        function openBookRoom(roomId) {
+            if (!authToken) {
+                showToast('Please login to book a room', 'error');
+                showSection('login');
+                return;
+            }
+            
+            const room = allRooms.find(r => r.roomId === roomId);
+            if (!room) return;
+            
+            document.getElementById('bookRoomId').value = roomId;
+            document.getElementById('bookRoomName').textContent = room.name;
+            document.getElementById('bookRoomLocation').textContent = `${room.location?.name}, ${room.location?.city}`;
+            document.getElementById('bookRoomCapacity').textContent = room.capacity;
+            document.getElementById('bookRoomPrice').textContent = room.basePrice;
+            document.getElementById('bookingDate').value = '';
+            document.getElementById('weatherPriceInfo').classList.add('hidden');
+            
+            showSection('bookRoom');
+        }
+
+        async function checkWeatherPrice() {
+            const roomId = document.getElementById('bookRoomId').value;
+            const date = document.getElementById('bookingDate').value;
+            const room = allRooms.find(r => r.roomId === roomId);
+            
+            if (!date || !room) return;
+            
+            const location = room.location || allLocations.find(l => l.locationId === room.locationId);
+            const city = location?.city || 'London';
+            
+            showLoading();
+            try {
+                // Get weather forecast from Lambda
+                const weatherResponse = await fetch(`${WEATHER_LAMBDA_URL}/forecast?city=${encodeURIComponent(city)}&date=${date}`);
+                
+                if (weatherResponse.ok) {
+                    const weatherData = await weatherResponse.json();
+                    const temp = weatherData.forecast?.temperature || weatherData.temperature || 15;
+                    const condition = weatherData.forecast?.condition || weatherData.condition || 'Mild';
+                    
+                    // Calculate price adjustment based on weather
+                    let adjustment = 0;
+                    let adjustmentText = 'No adjustment';
+                    
+                    if (temp < 5) {
+                        adjustment = 0.15; // 15% increase for cold weather
+                        adjustmentText = '+15% (Cold weather)';
+                    } else if (temp < 10) {
+                        adjustment = 0.10; // 10% increase for cool weather
+                        adjustmentText = '+10% (Cool weather)';
+                    } else if (temp > 25) {
+                        adjustment = -0.10; // 10% discount for hot weather
+                        adjustmentText = '-10% (Hot weather)';
+                    } else if (temp > 20) {
+                        adjustment = -0.05; // 5% discount for warm weather
+                        adjustmentText = '-5% (Warm weather)';
+                    }
+                    
+                    const finalPrice = Math.round(room.basePrice * (1 + adjustment));
+                    
+                    document.getElementById('weatherTemp').textContent = `${temp}°C`;
+                    document.getElementById('weatherCondition').textContent = condition;
+                    document.getElementById('priceAdjustment').textContent = adjustmentText;
+                    document.getElementById('finalPrice').textContent = finalPrice;
+                    document.getElementById('weatherPriceInfo').classList.remove('hidden');
+                } else {
+                    // Fallback - just show base price
+                    document.getElementById('weatherTemp').textContent = '~';
+                    document.getElementById('weatherCondition').textContent = 'Unknown';
+                    document.getElementById('priceAdjustment').textContent = 'N/A';
+                    document.getElementById('finalPrice').textContent = room.basePrice;
+                    document.getElementById('weatherPriceInfo').classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('Weather check failed:', err);
+                document.getElementById('weatherTemp').textContent = '~';
+                document.getElementById('weatherCondition').textContent = 'Unavailable';
+                document.getElementById('priceAdjustment').textContent = 'N/A';
+                document.getElementById('finalPrice').textContent = room.basePrice;
+                document.getElementById('weatherPriceInfo').classList.remove('hidden');
+            }
+            hideLoading();
+        }
+
+        async function handleBooking(e) {
+            e.preventDefault();
+            if (!authToken) {
+                showToast('Please login to book', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/bookings`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        roomId: document.getElementById('bookRoomId').value,
+                        bookingDate: document.getElementById('bookingDate').value
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('confirmedBookingId').textContent = data.booking?.bookingId || data.bookingId || 'Confirmed';
+                    new bootstrap.Modal(document.getElementById('bookingSuccessModal')).show();
+                } else {
+                    showToast(data.error?.message || 'Booking failed', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error. Please try again.', 'error');
+            }
+            hideLoading();
+        }
+
+        // My Bookings
+        async function loadMyBookings() {
+            if (!authToken) return;
+            
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/bookings`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                const bookings = data.bookings || [];
+                
+                const grid = document.getElementById('bookingsGrid');
+                if (bookings.length === 0) {
+                    grid.innerHTML = '<div class="col-12 text-center text-white"><h4>No bookings yet</h4><p>Book your first conference room!</p></div>';
+                } else {
+                    grid.innerHTML = bookings.map(booking => `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card booking-card ${booking.status}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${booking.room?.name || 'Conference Room'}</h5>
+                                    <p class="text-muted"><i class="bi bi-geo-alt"></i> ${booking.room?.location?.name || 'Location'}</p>
+                                    <hr>
+                                    <p><i class="bi bi-calendar"></i> <strong>${new Date(booking.bookingDate).toLocaleDateString('en-GB', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</strong></p>
+                                    <p><i class="bi bi-thermometer-half"></i> Weather: ${booking.forecastedTemp || 'N/A'}°C</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-${booking.status === 'confirmed' ? 'success' : 'warning'}">${booking.status}</span>
+                                        <span class="price-tag">£${booking.finalPrice}</span>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-muted">
+                                    <small>Booked: ${new Date(booking.createdAt).toLocaleDateString()}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                showToast('Failed to load bookings', 'error');
+            }
+            hideLoading();
+        }
+
+        // Service Status Check
+        async function checkAllServices() {
+            const services = [
+                { name: 'API Gateway', endpoint: `${API_BASE.replace('/api', '')}/health` },
+                { name: 'Auth Service', endpoint: `${API_BASE}/auth/health` },
+                { name: 'Rooms Service', endpoint: `${API_BASE}/rooms/health` },
+                { name: 'Booking Service', endpoint: `${API_BASE}/bookings/health` },
+                { name: 'Weather Lambda', endpoint: `${WEATHER_LAMBDA_URL}/health` }
+            ];
+            
+            const tableBody = document.getElementById('serviceStatusTable');
+            tableBody.innerHTML = services.map(s => `
+                <tr id="status-${s.name.replace(/\s/g, '')}">
+                    <td><strong>${s.name}</strong></td>
+                    <td><small class="text-muted">${s.endpoint}</small></td>
+                    <td><span class="service-status">Checking...</span></td>
+                    <td>-</td>
+                </tr>
+            `).join('');
+            
+            for (const service of services) {
+                const startTime = Date.now();
+                const row = document.getElementById(`status-${service.name.replace(/\s/g, '')}`);
+                
+                try {
+                    const response = await fetch(service.endpoint, { 
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    const responseTime = Date.now() - startTime;
+                    
+                    if (response.ok) {
+                        row.innerHTML = `
+                            <td><strong>${service.name}</strong></td>
+                            <td><small class="text-muted">${service.endpoint}</small></td>
+                            <td><span class="service-status online"><i class="bi bi-check-circle"></i> Online</span></td>
+                            <td>${responseTime}ms</td>
+                        `;
+                    } else {
+                        throw new Error('Not OK');
+                    }
+                } catch (err) {
+                    const responseTime = Date.now() - startTime;
+                    row.innerHTML = `
+                        <td><strong>${service.name}</strong></td>
+                        <td><small class="text-muted">${service.endpoint}</small></td>
+                        <td><span class="service-status offline"><i class="bi bi-x-circle"></i> Offline</span></td>
+                        <td>${responseTime}ms</td>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
