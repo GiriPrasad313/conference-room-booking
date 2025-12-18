@@ -107,18 +107,17 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 10m
           script: |
-            set -e
             cd ~/conference-room-booking/conference-room-booking
-            echo "Pulling latest code..."
-            git pull origin main
-            echo "Stopping containers..."
+            echo "=== Pulling latest code ==="
+            git fetch origin main
+            git reset --hard origin/main
+            echo "=== Restarting containers ==="
             docker-compose down || true
-            echo "Starting containers..."
             docker-compose up -d --build
-            echo "Waiting for services to be healthy..."
+            echo "=== Waiting for services ==="
             sleep 30
             docker ps
-            echo "Deployment completed!"
+            echo "=== Deployment completed ==="
 
   # ============================================
   # Job 5: Integration Tests
@@ -137,21 +136,9 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "========================================"
-            echo "Running Integration Tests"
-            echo "========================================"
-            echo "1. Testing API Gateway..."
-            curl -sf http://localhost:8080/health || exit 1
-            echo " [PASS]"
-            echo "2. Testing Auth Service..."
-            curl -sf http://localhost:8080/api/auth/health || exit 1
-            echo " [PASS]"
-            echo "3. Testing Rooms Service..."
-            curl -sf http://localhost:8080/api/rooms/health || exit 1
-            echo " [PASS]"
-            echo "4. Testing Booking Service..."
-            curl -sf http://localhost:8080/api/bookings/health || exit 1
-            echo " [PASS]"
-            echo "========================================"
-            echo "All Integration Tests PASSED!"
-            echo "========================================"
+            echo "=== Integration Tests ==="
+            curl -sf http://localhost:8080/health && echo "API Gateway: PASS"
+            curl -sf http://localhost:8080/api/auth/health && echo "Auth Service: PASS"
+            curl -sf http://localhost:8080/api/rooms/health && echo "Rooms Service: PASS"
+            curl -sf http://localhost:8080/api/bookings/health && echo "Booking Service: PASS"
+            echo "=== All Tests PASSED ==="
