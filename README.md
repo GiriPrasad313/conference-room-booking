@@ -1,266 +1,258 @@
 # Conference Room Booking System
 
-A cloud-native microservices application for booking conference rooms across UK locations with dynamic weather-based pricing.
+A microservices-based web application for booking conference rooms across UK locations. Implements weather-based dynamic pricing where room costs adjust based on forecasted temperatures.
 
-## 🎯 Project Overview
+## Overview
 
-This system allows users to book conference rooms in various UK locations (London, Manchester, Edinburgh, Birmingham). The pricing dynamically adjusts based on weather forecasts - the further the temperature deviates from the optimal 21°C, the higher the adjustment applied.
+This system allows registered users to browse available conference rooms in London, Manchester, Edinburgh, and Birmingham, then make bookings with prices that adjust based on weather conditions. The further the temperature deviates from 21°C, the higher the price adjustment.
 
-### Key Features
+### Features
 
-- **User Authentication** - JWT-based authentication with refresh tokens
-- **Room Management** - Browse and search conference rooms by location, capacity, amenities
-- **Dynamic Pricing** - Weather-based price adjustments
-- **Email Notifications** - Booking confirmations and cancellations
-- **Full-Day Bookings** - Simple one-room-per-day booking model
+- User registration and JWT authentication
+- Browse rooms by location, capacity, and amenities
+- Weather-based dynamic pricing
+- Email notifications for bookings and cancellations
+- Full-day booking model (one room per day)
 
-## 🏗️ Architecture
+## Architecture
+
+The application follows a microservices architecture with six independent services:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        API Gateway (nginx)                       │
-│                         Port 80                                  │
-└─────────────┬─────────────┬─────────────┬─────────────┬─────────┘
-              │             │             │             │
-      ┌───────▼───────┐ ┌───▼───────┐ ┌───▼───────┐ ┌───▼─────────┐
-      │ Auth Service  │ │  Rooms    │ │ Booking   │ │  Weather    │
-      │   (Node.js)   │ │ Service   │ │ Service   │ │  Service    │
-      │   Port 3001   │ │ Port 3002 │ │ Port 3003 │ │  Port 5000  │
-      └───────┬───────┘ └─────┬─────┘ └─────┬─────┘ └─────────────┘
-              │               │             │
-      ┌───────▼───────────────▼─────┐ ┌─────▼─────┐
-      │       PostgreSQL            │ │  MongoDB  │
-      │   (users, rooms, locations) │ │ (bookings)│
-      └─────────────────────────────┘ └───────────┘
+                         +------------------+
+                         |   API Gateway    |
+                         |   (nginx:80)     |
+                         +--------+---------+
+                                  |
+        +------------+------------+------------+------------+
+        |            |            |            |            |
+   +----v----+  +----v----+  +----v----+  +----v----+  +----v----+
+   |  Auth   |  |  Rooms  |  | Booking |  | Weather |  |  Email  |
+   | Service |  | Service |  | Service |  | Service |  |  Worker |
+   | (3001)  |  | (3002)  |  | (3003)  |  | (5000)  |  |  (SQS)  |
+   +----+----+  +----+----+  +----+----+  +---------+  +---------+
+        |            |            |
+        v            v            v
+   +----------+ +----------+ +----------+
+   |PostgreSQL| |PostgreSQL| | MongoDB  |
+   +----------+ +----------+ +----------+
 ```
 
-### Services
+### Service Details
 
-| Service | Technology | Port | Database | Description |
-|---------|------------|------|----------|-------------|
-| API Gateway | nginx | 80 | - | Routes requests to services |
-| Auth Service | Node.js/Express | 3001 | PostgreSQL | User authentication & JWT |
-| Rooms Service | Node.js/Express | 3002 | PostgreSQL | Location & room management |
-| Booking Service | Node.js/Express | 3003 | MongoDB | Booking with dynamic pricing |
-| Weather Service | Python/Flask | 5000 | - | Weather forecasts (simulated) |
-| Email Worker | Node.js | - | - | SQS-triggered notifications |
+| Service | Stack | Port | Database | Purpose |
+|---------|-------|------|----------|---------|
+| API Gateway | nginx | 80/8080 | - | Request routing |
+| Auth Service | Node.js/Express | 3001 | PostgreSQL | User authentication |
+| Rooms Service | Node.js/Express | 3002 | PostgreSQL | Room and location data |
+| Booking Service | Node.js/Express | 3003 | MongoDB | Booking management |
+| Weather Service | Python/Flask | 5000 | - | Weather forecasts |
+| Email Worker | AWS Lambda | - | - | Notification processing |
 
-## 🚀 Quick Start
+## Getting Started
 
 ### Prerequisites
 
-- Docker & Docker Compose
+- Docker and Docker Compose
 - Node.js 18+ (for local development)
 - Python 3.9+ (for Weather Service)
+- AWS account (for production deployment)
 
 ### Local Development
 
-1. **Clone and start services:**
+1. Clone the repository:
    ```bash
+   git clone <repository-url>
    cd conference-room-booking
+   ```
+
+2. Start all services:
+   ```bash
    docker-compose up -d
    ```
 
-2. **Wait for services to initialize** (~30 seconds)
+3. Wait approximately 30 seconds for services to initialize.
 
-3. **Verify services are running:**
+4. Verify services are running:
    ```bash
-   curl http://localhost/api/auth/health
-   curl http://localhost/api/rooms/health
-   curl http://localhost/api/bookings/health
-   curl http://localhost/api/weather/health
+   curl http://localhost:8080/api/auth/health
+   curl http://localhost:8080/api/rooms/health
+   curl http://localhost:8080/api/bookings/health
+   curl http://localhost:8080/api/weather/health
    ```
 
-### API Endpoints
+## API Reference
 
-#### Authentication
-```bash
-# Register
+### Authentication
+
+**Register a new user:**
+```http
 POST /api/auth/register
-{
-  "email": "user@example.com",
-  "password": "SecurePass123!",
-  "firstName": "John",
-  "lastName": "Doe"
-}
+Content-Type: application/json
 
-# Login
-POST /api/auth/login
 {
-  "email": "user@example.com",
-  "password": "SecurePass123!"
+  "email": "user@domain.com",
+  "password": "SecurePassword123",
+  "firstName": "John",
+  "lastName": "Smith"
 }
 ```
 
-#### Rooms
-```bash
-# Get all locations
+**Login:**
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@domain.com",
+  "password": "SecurePassword123"
+}
+```
+
+### Rooms
+
+**Get all locations:**
+```http
 GET /api/locations
+```
 
-# Search rooms
+**Search rooms:**
+```http
 GET /api/rooms/search?city=London&minCapacity=10
+```
 
-# Get room details
+**Get room details:**
+```http
 GET /api/rooms/{roomId}
 ```
 
-#### Bookings
-```bash
-# Create booking (requires auth token)
+### Bookings
+
+**Create booking:**
+```http
 POST /api/bookings
 Authorization: Bearer {token}
-{
-  "roomId": "uuid",
-  "bookingDate": "2024-06-15"
-}
+Content-Type: application/json
 
-# Get user's bookings
+{
+  "roomId": "room-uuid",
+  "bookingDate": "2025-01-15"
+}
+```
+
+**Get user bookings:**
+```http
 GET /api/bookings
 Authorization: Bearer {token}
+```
 
-# Cancel booking
+**Cancel booking:**
+```http
 PUT /api/bookings/{bookingId}/cancel
 Authorization: Bearer {token}
 ```
 
-#### Weather
-```bash
-# Get forecast
-GET /api/weather/forecast?locationId=loc_london&date=2024-06-15
+### Weather
+
+**Get forecast:**
+```http
+GET /api/weather/forecast?locationId=loc_london&date=2025-01-15
 ```
 
-## 💰 Dynamic Pricing Formula
+## Dynamic Pricing
+
+The final booking price is calculated using the formula:
 
 ```
-finalPrice = basePrice + |forecastedTemp - 21| × 0.5
-
-Example:
-- Base price: £100
-- Forecasted temp: 31°C (10° above optimal)
-- Weather adjustment: 10 × 0.5 = £5
-- Final price: £105
+finalPrice = basePrice + |forecastedTemp - 21| x 0.5
 ```
+
+Example calculation:
+- Base price: 100 GBP
+- Forecasted temperature: 31C (10 degrees above optimal 21C)
+- Weather adjustment: 10 x 0.5 = 5 GBP
+- Final price: 105 GBP
 
 If the Weather Service is unavailable, a 10% fallback surcharge is applied.
 
-## 🧪 Running Tests
+## Testing
 
+Run all tests:
 ```bash
-# All services
 npm test
+```
 
-# Specific service
+Run tests for a specific service:
+```bash
 cd services/auth-service && npm test
 cd services/booking-service && npm test
-
-# Weather service (Python)
 cd services/weather-service && pytest --cov=src
 ```
 
-## 📦 Deployment
+## Deployment
 
-### CI/CD Pipeline (GitHub Actions)
+### CI/CD Pipeline
 
-The pipeline automatically:
-1. Runs tests on all services
-2. Builds Docker images
-3. Pushes to Amazon ECR
-4. Deploys to EC2
+The GitHub Actions workflow handles:
+1. Running tests on all services
+2. Building Docker images
+3. Deploying to EC2 via SSH
 
 ### Required GitHub Secrets
 
 | Secret | Description |
 |--------|-------------|
-| `AWS_ACCESS_KEY_ID` | AWS access key |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key |
-| `AWS_ACCOUNT_ID` | AWS account ID |
-| `EC2_HOST` | EC2 public IP/hostname |
-| `EC2_SSH_KEY` | SSH private key for EC2 |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `MONGO_URI` | MongoDB connection string |
-| `JWT_SECRET` | JWT signing secret |
+| AWS_ACCESS_KEY_ID | AWS access key |
+| AWS_SECRET_ACCESS_KEY | AWS secret key |
+| AWS_SESSION_TOKEN | AWS session token (Learner Lab) |
+| EC2_HOST | EC2 instance public IP |
+| EC2_SSH_KEY | SSH private key for EC2 |
+| SQS_QUEUE_URL | SQS queue URL for notifications |
 
-### AWS Architecture
+### AWS Resources
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         AWS us-east-1                            │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐ │
-│  │   Route 53  │───▶│     ALB     │───▶│    EC2 (t2.micro)   │ │
-│  └─────────────┘    └─────────────┘    │   Docker Compose    │ │
-│                                         └─────────┬───────────┘ │
-│                                                   │             │
-│  ┌─────────────────────────────────────────────────────────────┤
-│  │                         VPC                                  │
-│  │  ┌─────────────┐    ┌─────────────┐    ┌────────────────┐  │
-│  │  │ RDS (Postgres)│  │   DocumentDB │   │   SQS Queue    │  │
-│  │  └─────────────┘    └─────────────┘    └────────────────┘  │
-│  └─────────────────────────────────────────────────────────────┤
-└─────────────────────────────────────────────────────────────────┘
-```
+- EC2 t2.micro instance running Docker Compose
+- SQS queue for email notification processing
+- SNS topic for email delivery
+- Lambda function for processing notifications
+- CloudWatch for monitoring and logging
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 conference-room-booking/
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yml           # GitHub Actions pipeline
+├── .github/workflows/      # CI/CD pipeline configuration
 ├── services/
-│   ├── api-gateway/
-│   │   └── nginx.conf          # API routing
-│   ├── auth-service/           # Authentication
-│   ├── rooms-service/          # Room management
-│   ├── booking-service/        # Booking with pricing
-│   ├── weather-service/        # Python Flask service
-│   └── email-worker/           # SQS notification worker
-├── scripts/
-│   └── init-db.sql             # Database initialization
-├── docker-compose.yml          # Local development
-├── docker-compose.prod.yml     # Production deployment
-└── README.md
+│   ├── api-gateway/        # nginx configuration
+│   ├── auth-service/       # Authentication service
+│   ├── rooms-service/      # Room management service
+│   ├── booking-service/    # Booking service
+│   ├── weather-service/    # Weather forecast service
+│   └── email-worker/       # Email notification worker
+├── frontend/               # Web interface
+├── lambda-email-worker/    # Lambda function for notifications
+├── scripts/                # Database initialization
+├── docker-compose.yml      # Development configuration
+└── docker-compose.prod.yml # Production configuration
 ```
 
-## 🔧 Environment Variables
+## Environment Variables
 
 ### Auth Service
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | - | PostgreSQL connection string |
-| `JWT_SECRET` | - | JWT signing secret (min 32 chars) |
-| `REFRESH_TOKEN_SECRET` | - | Refresh token secret |
-| `JWT_EXPIRY` | 24h | Token expiration time |
+| Variable | Description |
+|----------|-------------|
+| DATABASE_URL | PostgreSQL connection string |
+| JWT_SECRET | JWT signing secret (min 32 characters) |
+| JWT_EXPIRY | Token expiration time (default: 24h) |
 
 ### Booking Service
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MONGO_URI` | - | MongoDB connection string |
-| `WEATHER_SERVICE_URL` | http://weather-service:5000 | Weather API URL |
-| `ROOMS_SERVICE_URL` | http://rooms-service:3002 | Rooms API URL |
+| Variable | Description |
+|----------|-------------|
+| MONGO_URI | MongoDB connection string |
+| WEATHER_SERVICE_URL | Weather API endpoint |
+| ROOMS_SERVICE_URL | Rooms API endpoint |
+| SQS_QUEUE_URL | SQS queue for notifications |
 
-## 📝 Assignment Notes
+## License
 
-This project was developed for DevOps Assignment 2 (December 2025) following the system design from Assignment 1.
-
-### Budget Considerations (50 AWS Credits)
-
-- Using single t2.micro EC2 instance
-- RDS db.t3.micro for PostgreSQL
-- Minimal use of managed services
-- Docker Compose for simplified deployment
-
-### Key Deliverables
-
-1. ✅ Source code in GitHub repository
-2. ✅ CI/CD pipeline with GitHub Actions
-3. ✅ Docker containerization
-4. ✅ Unit tests with coverage
-5. ⬜ Video demonstration (5-8 minutes)
-6. ⬜ Written report (6 pages)
-
-## 📄 License
-
-This project is for educational purposes as part of university coursework.
-#   D e p l o y m e n t   t r i g g e r e d   2 0 2 5 - 1 2 - 1 8   1 5 : 4 7 : 2 9  
- 
+This project was developed for educational purposes as part of university coursework.

@@ -1,7 +1,7 @@
 {
   "name": "conference-room-booking",
   "version": "1.0.0",
-  "description": "Scalable Conference Room Booking System - Microservices Architecture",
+  "description": "Conference Room Booking System with Microservices Architecture",
   "private": true,
   "workspaces": [
     "services/*"
@@ -22,6 +22,5 @@
     "docker",
     "aws"
   ],
-  "author": "",
   "license": "ISC"
 }

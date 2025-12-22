@@ -31,7 +31,7 @@ const createTransporter = () => {
   // Use console logging in development
   return {
     sendMail: async (mailOptions) => {
-      console.log('\n📧 EMAIL NOTIFICATION (Development Mode)');
+      console.log('\n[EMAIL NOTIFICATION - Development Mode]');
       console.log('=========================================');
       console.log(`To: ${mailOptions.to}`);
       console.log(`Subject: ${mailOptions.subject}`);
@@ -71,9 +71,9 @@ The Booking Team
 <html>
 <head><style>body{font-family:Arial,sans-serif;}</style></head>
 <body>
-  <h2>Booking Confirmed! ✅</h2>
+  <h2>Booking Confirmed</h2>
   <p>Hello,</p>
-  <p>Your booking has been confirmed!</p>
+  <p>Your booking has been confirmed.</p>
   
   <div style="background:#f5f5f5;padding:15px;border-radius:5px;margin:20px 0;">
     <h3 style="margin-top:0;">Booking Details</h3>
@@ -85,7 +85,7 @@ The Booking Team
     </ul>
     ${data.weatherCondition ? `
     <p style="color:#666;font-size:0.9em;">
-      🌤️ Weather forecast: ${data.forecastedTemp}°C, ${data.weatherCondition}
+      Weather forecast: ${data.forecastedTemp}C, ${data.weatherCondition}
     </p>
     ` : ''}
   </div>
@@ -119,7 +119,7 @@ The Booking Team
 <html>
 <head><style>body{font-family:Arial,sans-serif;}</style></head>
 <body>
-  <h2>Booking Cancelled ❌</h2>
+  <h2>Booking Cancelled</h2>
   <p>Hello,</p>
   <p>Your booking has been cancelled.</p>
   
